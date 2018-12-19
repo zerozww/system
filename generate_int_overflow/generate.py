@@ -169,13 +169,17 @@ def gen_cond_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, thresh_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    thresh = random.randrange(0, MAXIMUM_INT)
-    int_init = random.randrange(math.floor(0.5*MAXIMUM_INT), math.floor(0.75*MAXIMUM_INT))
-    true_int = random.randrange(math.floor(0.5*MAXIMUM_INT), MAXIMUM_INT)
-    false_int = random.randrange(0, MAXIMUM_INT)
+    thresh = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
+    int_init = random.randrange(0, MAXIMUM_INT)
+    true_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
+    false_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     char = _get_char()
     substitutions = {
         'int_var': int_var,
@@ -187,16 +191,15 @@ def gen_cond_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.COND_MAIN_LINES
-    """need to modified"""
-    cond = int_init < thresh
-    safe = ((cond and (true_int < thresh)) or
-            (not cond and (false_int < thresh)))
+    main_lines = templates.COND_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.COND_MAIN_LINES_MINUS
+    safe = max(int_init+true_int, int_init+false_int) < MAXIMUM_INT if is_pos_add_pos \
+        else max(int_init-true_int, int_init-true_int) > MINIMUM_INT
     dec_init_pairs = templates.COND_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite, is_pos_add_pos)
 
 
 def gen_while_example(include_cond_bufwrite=True):
@@ -206,11 +209,12 @@ def gen_while_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
     int_init = random.randrange(483647, MAXIMUM_INT)
-    int_count = int_init % 1000000
+    int_count = math.floor(int_init / 1000000)
     count_int = random.randrange(0, 2147)
     char = _get_char()
     substitutions = {
@@ -222,13 +226,14 @@ def gen_while_example(include_cond_bufwrite=True):
         'count_int': count_int,
         'char': char
     }
-    main_lines = templates.WHILE_MAIN_LINES
+    main_lines = templates.WHILE_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.WHILE_MAIN_LINES_MINUS
     safe = (int_count + count_int) < 2147
     dec_init_pairs = templates.WHILE_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite,is_pos_add_pos)
 
 
 def gen_for_example(include_cond_bufwrite=True):
@@ -238,12 +243,13 @@ def gen_for_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
     int_init = random.randrange(483647, MAXIMUM_INT)
     count_int = random.randrange(0, 2147)
-    int_count = int_init % 1000000
+    int_count = math.floor(int_init / 1000000)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
@@ -254,13 +260,14 @@ def gen_for_example(include_cond_bufwrite=True):
         'count_int': count_int,
         'char': char
     }
-    main_lines = templates.FOR_MAIN_LINES
+    main_lines = templates.FOR_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.FOR_MAIN_LINES_MINUS
     safe = (int_count + count_int) < 2147
     dec_init_pairs = templates.FOR_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite, is_pos_add_pos)
 
 
 def gen_fv_cond_example(include_cond_bufwrite=True):
@@ -270,30 +277,35 @@ def gen_fv_cond_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, free_var, thresh_var = anon_vars[:4]
     dummy_vars = anon_vars[4:]
     int_init = random.randrange(MAXIMUM_INT)
-    thresh_int = random.randrange(MAXIMUM_INT)
-    false_int = random.randrange(MAXIMUM_INT)
+    thresh_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
+    false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
         'int_var': int_var,
-        'thresh_var':thresh_var,
+        'thresh_var': thresh_var,
         'thresh_int': thresh_int,
         'free_var': free_var,
         'int_init': int_init,
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.COND_FV_MAIN_LINES
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
+    main_lines = templates.COND_FV_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.COND_FV_MAIN_LINES_MINUS
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
+        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
     dec_init_pairs = templates.COND_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite, is_pos_add_pos)
 
 
 def gen_fv_while_example(include_cond_bufwrite=True):
@@ -303,12 +315,15 @@ def gen_fv_while_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, free_var, thresh_var, count_var = anon_vars[:5]
     dummy_vars = anon_vars[5:]
-    thresh_int = random.randrange(MAXIMUM_INT)
+    thresh_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     int_init = random.randrange(483647, MAXIMUM_INT)
-    false_int = random.randrange(MAXIMUM_INT)
+    false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
@@ -321,13 +336,15 @@ def gen_fv_while_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.WHILE_FV_MAIN_LINES
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
+    main_lines = templates.WHILE_FV_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.WHILE_FV_MAIN_LINES_MINUS
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
+        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
     dec_init_pairs = templates.WHILE_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite, is_pos_add_pos)
 
 
 def gen_fv_for_example(include_cond_bufwrite=True):
@@ -337,11 +354,14 @@ def gen_fv_for_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, free_var, thresh_var, count_var = anon_vars[:5]
     dummy_vars = anon_vars[5:]
-    thresh_int = random.randrange(MAXIMUM_INT)
-    false_int = random.randrange(MAXIMUM_INT)
+    thresh_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
+    false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     int_init = random.randrange(483647, MAXIMUM_INT)
     char = _get_char()
     substitutions = {
@@ -355,13 +375,15 @@ def gen_fv_for_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.FOR_FV_MAIN_LINES
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
+    main_lines = templates.FOR_FV_MAIN_LINES_ADD if is_pos_add_pos \
+        else templates.FOR_FV_MAIN_LINES_MINUS
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
+        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
     dec_init_pairs = templates.FOR_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite)
+                                     include_cond_bufwrite, is_pos_add_pos)
 
 
 def gen_tautonly_linear_example():
@@ -385,7 +407,7 @@ def gen_tautonly_linear_example():
 
 
 def _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
-                              safe, substitutions, include_cond_bufwrite):
+                              safe, substitutions, include_cond_bufwrite, is_pos_add_pos = True):
     """Get instance lines, convert to string, generate tags
 
     Args:
@@ -406,12 +428,20 @@ def _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
     Ensures:
         len(instance_str.split("\n")) == len(tags)
     """
-    if include_cond_bufwrite:
+    # if include_cond_bufwrite:
+    #     # copy to avoid changing the template list due to aliasing
+    #     main_lines = main_lines[:]
+    #     main_lines += templates.INTCALCFLOW_ADD
+    # else:
+    #     safe = None
+
+    if is_pos_add_pos:
         # copy to avoid changing the template list due to aliasing
         main_lines = main_lines[:]
         main_lines += templates.INTCALCFLOW_ADD
     else:
-        safe = None
+        main_lines = main_lines[:]
+        main_lines += templates.INTCALCFLOW_MINUS
 
     lines, body_tags = _get_lines(dec_init_pairs, main_lines,
                                   dummy_vars, safe, include_cond_bufwrite)
@@ -483,6 +513,10 @@ def _get_lines(dec_init_pairs, main_lines, dummy_vars, safe,
 
     # construct body tags before adding dummies
     body_tags = [Tag.BODY for _ in lines]
+    # if include_cond_bufwrite:
+    #     query_tag = Tag.INTCALCFLOW_COND_SAFE if safe else Tag.INTCALCFLOW_COND_UNSAFE
+    #     body_tags[-1] = query_tag
+
     if include_cond_bufwrite:
         query_tag = Tag.INTCALCFLOW_COND_SAFE if safe else Tag.INTCALCFLOW_COND_UNSAFE
         body_tags[-1] = query_tag
@@ -602,26 +636,24 @@ def _insert_referential_dummy(lines, dummy_vars, body_tags,
         raise ValueError("Trying to insert more dummy vars than available")
 
     if require_safe:
-        dum_len = random.randrange(1, MAX_IDX)
         dum_int = random.randrange(0, math.floor(0.5*MAXIMUM_INT))
         add_int = random.randrange(0, math.floor(0.5*MAXIMUM_INT))
     else:
-        dum_len = random.randrange(MAX_IDX)
-        dum_int = random.randrange(0, math.floor(0.5*MAXIMUM_INT))
+        dum_int = random.randrange(0, MAXIMUM_INT)
         add_int = random.randrange(0, MAXIMUM_INT)
 
     dum_int_var = dummy_vars.pop()
     dum_add_var = dummy_vars.pop()
-    buf_dec_line = "int %s = %d;" % (dum_int_var, dum_int)
-    add_dec_line = "int %s;" % dum_add_var
+    dum_int_dec_line = "int %s = %d;" % (dum_int_var, dum_int)
+    add_int_dec_line = "int %s;" % dum_add_var
     add_init_line = "%s = %s;" % (dum_add_var, add_int)
-    buf_set_line = "%s += %s;" % (dum_int_var, dum_add_var)
+    dum_calc_line = "%s += %s;" % (dum_int_var, dum_add_var)
 
     # idx declaration must go before idx initialization
-    setup_lines = [add_dec_line, add_init_line]
+    setup_lines = [add_int_dec_line, add_init_line]
     # buffer declaration can go anywhere between them
     dum_dec_idx = random.randrange(3)
-    setup_lines = (setup_lines[:dum_dec_idx] + [buf_dec_line] +
+    setup_lines = (setup_lines[:dum_dec_idx] + [dum_int_dec_line] +
                    setup_lines[dum_dec_idx:])
 
     # whether these setup lines go before the control flow lines
@@ -654,10 +686,10 @@ def _insert_referential_dummy(lines, dummy_vars, body_tags,
     lines = (lines[:setup_idxes[0]] + [setup_lines[0]] +
              lines[setup_idxes[0]:setup_idxes[1]] + [setup_lines[1]] +
              lines[setup_idxes[1]:setup_idxes[2]] + [setup_lines[2]] +
-             lines[setup_idxes[2]:dum_set_idx] + [buf_set_line] +
+             lines[setup_idxes[2]:dum_set_idx] + [dum_calc_line] +
              lines[dum_set_idx:])
 
-    safe = add_int < 0.5*MAXIMUM_INT
+    safe = dum_int+add_int < MAXIMUM_INT
     dum_add_tag = Tag.INTCALCFLOW_TAUT_SAFE if safe else Tag.INTCALCFLOW_TAUT_UNSAFE
 
     body_tags = (body_tags[:setup_idxes[0]] + [Tag.BODY] +
