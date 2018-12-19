@@ -193,8 +193,14 @@ def gen_cond_example(include_cond_bufwrite=True):
     }
     main_lines = templates.COND_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.COND_MAIN_LINES_MINUS
-    safe = max(int_init+true_int, int_init+false_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-true_int, int_init-false_int) < MAXIMUM_INT
+    cond = int_init > thresh if is_pos_add_pos \
+        else -int_init < thresh
+    if is_pos_add_pos:
+        safe = int_init + true_int < MAXIMUM_INT if cond \
+            else int_init + false_int < MAXIMUM_INT
+    else:
+        safe = int_init - true_int < MAXIMUM_INT if cond \
+            else int_init - false_int < MAXIMUM_INT
     dec_init_pairs = templates.COND_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,

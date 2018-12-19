@@ -63,7 +63,7 @@ COND_MAIN_LINES_ADD = [
     "}"
 ]
 COND_MAIN_LINES_MINUS = [
-    "if($int_var > $thresh_var){",
+    "if( -$int_var < $thresh_var){",
     "$overflow_var = $true_int;",
     "} else {",
     "$overflow_var = $false_int;",
