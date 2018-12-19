@@ -194,7 +194,7 @@ def gen_cond_example(include_cond_bufwrite=True):
     main_lines = templates.COND_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.COND_MAIN_LINES_MINUS
     safe = max(int_init+true_int, int_init+false_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-true_int, int_init-false_int) > MINIMUM_INT
+        else max(int_init-true_int, int_init-false_int) < MAXIMUM_INT
     dec_init_pairs = templates.COND_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -300,7 +300,7 @@ def gen_fv_cond_example(include_cond_bufwrite=True):
     main_lines = templates.COND_FV_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.COND_FV_MAIN_LINES_MINUS
     safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
+        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.COND_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -339,7 +339,7 @@ def gen_fv_while_example(include_cond_bufwrite=True):
     main_lines = templates.WHILE_FV_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.WHILE_FV_MAIN_LINES_MINUS
     safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
+        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.WHILE_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -378,7 +378,7 @@ def gen_fv_for_example(include_cond_bufwrite=True):
     main_lines = templates.FOR_FV_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.FOR_FV_MAIN_LINES_MINUS
     safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) > MINIMUM_INT
+        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.FOR_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
