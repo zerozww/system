@@ -53,75 +53,89 @@ COND_DEC_INIT_PAIRS = [
 ]
 COND_MAIN_LINES = [
     "if($int_var > $thresh_var){",
-    "$overflow_var = $overflow_int;",
+    "$overflow_var = $true_int;",
     "} else {",
-    "$overflow_var = $no_overflow_int;",
+    "$overflow_var = $false_int;",
     "}"
 ]
 
 WHILE_DEC_INIT_PAIRS = [
-    ("char $buf_var[$buf_len];", None),
-    ("int $idx_var;", "$idx_var = $idx_init;"),
-    ("int $max_var;", "$max_var = $max_idx;")
+    ("int $overflow_var;", "$overflow_var = 0;"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $count_var;", "$count_var = $count_int;")
 ]
 WHILE_MAIN_LINES = [
-    "while($add_var < $count_var){",
-    "$add_var++;",
+    "int i = 0",
+    "while(i < $count_var){",
+    "$overflow_var += 1000000;",
+    "i++",
     "}"
 ]
 
 FOR_DEC_INIT_PAIRS = [
-    ("char $buf_var[$buf_len];", None),
-    ("int $idx_var;", None),
-    ("int $max_var;", "$max_var = $max_idx;")
+    ("int $overflow_var;", "$overflow_var = 0;"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $count_var;", "$count_var = $count_int;")
 ]
 FOR_MAIN_LINES = [
-    "for($idx_var = $idx_init; $idx_var < $max_var; $idx_var++){",
+    "for(int i = 0; i < $count_var; i++){",
+    "$overflow_var += 1000000;",
     "}"
 ]
 
 # templates for functions with one free variable
 
 COND_FV_DEC_INIT_PAIRS = [
-    ("int $idx_var;", "$idx_var = rand();"),
-    ("char $buf_var[$buf_len];", None),
-    ("int $chk_var;", "$chk_var = $chk;")
+    ("int $free_var;", "$free_var = rand();"),
+    ("int $overflow_var;", None),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $thresh_var;", "$thresh_var = $thresh_int;")
 ]
 COND_FV_MAIN_LINES = [
-    "if($idx_var < $chk_var){",
+    "if($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
     "} else {",
-    "$idx_var = $false_idx;",
+    "$overflow_var = $false_int;",
     "}"
 ]
 
 WHILE_FV_DEC_INIT_PAIRS = [
-    ("char $buf_var[$buf_len];", None),
-    ("int $idx_var;", "$idx_var = $idx_init;"),
-    ("int $chk_var;", "$chk_var = $chk;"),
-    ("int $max_var;", "$max_var = rand();")
+    ("int $overflow_var;", None),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $thresh_var;", "$thresh_var = $thresh_int;"),
+    ("int $free_var;", "$free_var = rand();")
 ]
 WHILE_FV_MAIN_LINES = [
-    "if ($max_var < $chk_var){",
+    "if ($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
     "} else {",
-    "$max_var = $false_idx;",
+    "$overflow_var = $false_int;",
     "}",
-    "while($idx_var < $max_var){",
-    "$idx_var++;",
+    "int i = 0;",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "while(i < $count_var){",
+    "$overflow_var += 1000000;",
+    "i++;",
     "}"
 ]
 
 FOR_FV_DEC_INIT_PAIRS = [
-    ("char $buf_var[$buf_len];", None),
-    ("int $idx_var;", None),
-    ("int $chk_var;", "$chk_var = $chk;"),
-    ("int $max_var;", "$max_var = rand();")
+    ("int $overflow_var;", None),
+    ("int $int_var;", "$int_var = $int_init"),
+    ("int $thresh_var;", "$thresh_var = $thresh_int;"),
+    ("int $free_var;", "$free_var = rand();")
 ]
 FOR_FV_MAIN_LINES = [
-    "if ($max_var < $chk_var){",
+    "if ($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
     "} else {",
-    "$max_var = $false_idx;",
+    "$overflow_var = $false_int;",
     "}",
-    "for($idx_var = $idx_init; $idx_var < $max_var; $idx_var++){",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "for(int i = 0; i < $count_var; i++){",
+    "$overflow_var += 1000000;",
     "}"
 ]
 

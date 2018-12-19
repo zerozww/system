@@ -110,9 +110,8 @@ def main(args):
     if seed != -1:
         random.seed(seed)
 
-    """generators = [gen_cond_example, gen_while_example, gen_for_example,
-                  gen_fv_cond_example, gen_fv_while_example, gen_fv_for_example]"""
-    generators = [gen_cond_example]
+    generators = [gen_cond_example, gen_while_example, gen_for_example,
+                  gen_fv_cond_example, gen_fv_while_example, gen_fv_for_example]
     if linear_only:
         generators = [gen_tautonly_linear_example]
     num_generators = len(generators)
@@ -173,10 +172,10 @@ def gen_cond_example(include_cond_bufwrite=True):
     anon_vars = _get_anon_vars()
     overflow_var, int_var, thresh_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    thresh = 0.5*MAXIMUM_INT
-    int_init = random.randrange(0, math.floor(0.75*MAXIMUM_INT))
-    overflow_int = random.randrange(0, math.floor(0.5*MAXIMUM_INT))
-    no_overflow_int = random.randrange(0, math.floor(0.1*MAXIMUM_INT))
+    thresh = random.randrange(0, MAXIMUM_INT)
+    int_init = random.randrange(math.floor(0.5*MAXIMUM_INT), math.floor(0.75*MAXIMUM_INT))
+    true_int = random.randrange(math.floor(0.5*MAXIMUM_INT), MAXIMUM_INT)
+    false_int = random.randrange(0, MAXIMUM_INT)
     char = _get_char()
     substitutions = {
         'int_var': int_var,
@@ -184,15 +183,15 @@ def gen_cond_example(include_cond_bufwrite=True):
         'thresh_var': thresh_var,
         'int_init': int_init,
         'overflow_var': overflow_var,
-        'overflow_int': overflow_int,
-        'no_overflow_int': no_overflow_int,
+        'true_int': true_int,
+        'false_int': false_int,
         'char': char
     }
     main_lines = templates.COND_MAIN_LINES
     """need to modified"""
-    cond = MAXIMUM_INT > (int_init + overflow_int)
-    safe = ((cond and (overflow_int < thresh)) or
-            (not cond and (no_overflow_int < thresh)))
+    cond = int_init < thresh
+    safe = ((cond and (true_int < thresh)) or
+            (not cond and (false_int < thresh)))
     dec_init_pairs = templates.COND_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -208,23 +207,23 @@ def gen_while_example(include_cond_bufwrite=True):
         tags (list of Tag): tag for each line representing buffer safety
     """
     anon_vars = _get_anon_vars()
-    buf_var, idx_var, max_var = anon_vars[:3]
+    overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    buf_len = random.randrange(MAX_IDX)
-    idx_init = random.randrange(MAX_IDX)
-    max_idx = random.randrange(MAX_IDX)
+    int_init = random.randrange(483647, MAXIMUM_INT)
+    int_count = int_init % 1000000
+    count_int = random.randrange(0, 2147)
     char = _get_char()
     substitutions = {
-        'buf_var': buf_var,
-        'idx_var': idx_var,
-        'max_var': max_var,
-        'buf_len': buf_len,
-        'idx_init': idx_init,
-        'max_idx': max_idx,
+        'overflow_var': overflow_var,
+        'int_var': int_var,
+        'count_var': count_var,
+        'int_count': int_count,
+        'int_init': int_init,
+        'count_int': count_int,
         'char': char
     }
     main_lines = templates.WHILE_MAIN_LINES
-    safe = max(idx_init, max_idx) < buf_len
+    safe = (int_count + count_int) < 2147
     dec_init_pairs = templates.WHILE_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -240,23 +239,23 @@ def gen_for_example(include_cond_bufwrite=True):
         tags (list of Tag): tag for each line representing buffer safety
     """
     anon_vars = _get_anon_vars()
-    buf_var, idx_var, max_var = anon_vars[:3]
+    overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    buf_len = random.randrange(MAX_IDX)
-    idx_init = random.randrange(MAX_IDX)
-    max_idx = random.randrange(MAX_IDX)
+    int_init = random.randrange(483647, MAXIMUM_INT)
+    count_int = random.randrange(0, 2147)
+    int_count = int_init % 1000000
     char = _get_char()
     substitutions = {
-        'buf_var': buf_var,
-        'idx_var': idx_var,
-        'max_var': max_var,
-        'buf_len': buf_len,
-        'idx_init': idx_init,
-        'max_idx': max_idx,
+        'overflow_var': overflow_var,
+        'int_var': int_var,
+        'count_var': count_var,
+        'int_count': int_count,
+        'int_init': int_init,
+        'count_int': count_int,
         'char': char
     }
     main_lines = templates.FOR_MAIN_LINES
-    safe = max(idx_init, max_idx) < buf_len
+    safe = (int_count + count_int) < 2147
     dec_init_pairs = templates.FOR_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -272,23 +271,24 @@ def gen_fv_cond_example(include_cond_bufwrite=True):
         tags (list of Tag): tag for each line representing buffer safety
     """
     anon_vars = _get_anon_vars()
-    buf_var, idx_var, chk_var = anon_vars[:3]
-    dummy_vars = anon_vars[3:]
-    chk = random.randrange(MAX_IDX)
-    buf_len = random.randrange(MAX_IDX)
-    false_idx = random.randrange(MAX_IDX)
+    overflow_var, int_var, free_var, thresh_var = anon_vars[:4]
+    dummy_vars = anon_vars[4:]
+    int_init = random.randrange(MAXIMUM_INT)
+    thresh_int = random.randrange(MAXIMUM_INT)
+    false_int = random.randrange(MAXIMUM_INT)
     char = _get_char()
     substitutions = {
-        'buf_var': buf_var,
-        'idx_var': idx_var,
-        'buf_len': buf_len,
-        'chk_var': chk_var,
-        'chk': chk,
-        'false_idx': false_idx,
+        'overflow_var': overflow_var,
+        'int_var': int_var,
+        'thresh_var':thresh_var,
+        'thresh_int': thresh_int,
+        'free_var': free_var,
+        'int_init': int_init,
+        'false_int': false_int,
         'char': char
     }
     main_lines = templates.COND_FV_MAIN_LINES
-    safe = max(chk - 1, false_idx) < buf_len
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.COND_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -304,26 +304,25 @@ def gen_fv_while_example(include_cond_bufwrite=True):
         tags (list of Tag): tag for each line representing buffer safety
     """
     anon_vars = _get_anon_vars()
-    buf_var, idx_var, max_var, chk_var = anon_vars[:4]
-    dummy_vars = anon_vars[4:]
-    chk = random.randrange(MAX_IDX)
-    buf_len = random.randrange(MAX_IDX)
-    false_idx = random.randrange(MAX_IDX)
-    idx_init = random.randrange(MAX_IDX)
+    overflow_var, int_var, free_var, thresh_var, count_var = anon_vars[:5]
+    dummy_vars = anon_vars[5:]
+    thresh_int = random.randrange(MAXIMUM_INT)
+    int_init = random.randrange(483647, MAXIMUM_INT)
+    false_int = random.randrange(MAXIMUM_INT)
     char = _get_char()
     substitutions = {
-        'buf_var': buf_var,
-        'idx_var': idx_var,
-        'max_var': max_var,
-        'chk_var': chk_var,
-        'chk': chk,
-        'buf_len': buf_len,
-        'idx_init': idx_init,
-        'false_idx': false_idx,
+        'overflow_var': overflow_var,
+        'int_var': int_var,
+        'free_var': free_var,
+        'thresh_var': thresh_var,
+        'thresh_int': thresh_int,
+        'int_init': int_init,
+        'count_var': count_var,
+        'false_int': false_int,
         'char': char
     }
     main_lines = templates.WHILE_FV_MAIN_LINES
-    safe = max(chk - 1, false_idx, idx_init) < buf_len
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.WHILE_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
@@ -339,26 +338,25 @@ def gen_fv_for_example(include_cond_bufwrite=True):
         tags (list of Tag): tag for each line representing buffer safety
     """
     anon_vars = _get_anon_vars()
-    buf_var, idx_var, max_var, chk_var = anon_vars[:4]
-    dummy_vars = anon_vars[4:]
-    chk = random.randrange(MAX_IDX)
-    buf_len = random.randrange(MAX_IDX)
-    false_idx = random.randrange(MAX_IDX)
-    idx_init = random.randrange(MAX_IDX)
+    overflow_var, int_var, free_var, thresh_var, count_var = anon_vars[:5]
+    dummy_vars = anon_vars[5:]
+    thresh_int = random.randrange(MAXIMUM_INT)
+    false_int = random.randrange(MAXIMUM_INT)
+    int_init = random.randrange(483647, MAXIMUM_INT)
     char = _get_char()
     substitutions = {
-        'buf_var': buf_var,
-        'idx_var': idx_var,
-        'max_var': max_var,
-        'chk_var': chk_var,
-        'chk': chk,
-        'buf_len': buf_len,
-        'idx_init': idx_init,
-        'false_idx': false_idx,
+        'overflow_var': overflow_var,
+        'int_var': int_var,
+        'free_var': free_var,
+        'thresh_var': thresh_var,
+        'thresh_int': thresh_int,
+        'int_init': int_init,
+        "count_var": count_var,
+        'false_int': false_int,
         'char': char
     }
     main_lines = templates.FOR_FV_MAIN_LINES
-    safe = max(chk - 1, false_idx, idx_init) < buf_len
+    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT
     dec_init_pairs = templates.FOR_FV_DEC_INIT_PAIRS
 
     return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
