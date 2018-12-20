@@ -169,15 +169,27 @@ def gen_cond_example(include_cond_bufwrite=True):
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
+    # 其他函数中出现相同的变量意义相同
+    # 随机选择一种产生模式，正数加正数或正数减负数
     is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
+    # 变量解释
+    # overflow_var 之后会加到int_var上的变量 也就是 += 符号的右变量
+    # int_var 初始变量也就是 += 符号的左变量
+    # thresh_var 控制流的条件变量
     overflow_var, int_var, thresh_var = anon_vars[:3]
+    # dummy_vars 混淆变量的数组
     dummy_vars = anon_vars[3:]
+    # 根据模式选择变量范围
+    # thresh 为thresh_var 进行初始化的数值
     thresh = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
         else random.randrange(MINIMUM_INT, 0)
+    # int_init 为int_var 进行初始化的数值
     int_init = random.randrange(0, MAXIMUM_INT)
+    # true_int 控制流走向 if 条件时 给overflow_var 初始化的数值
     true_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
         else random.randrange(MINIMUM_INT, 0)
+    # false_int 控制流走向 else 条件时 给overflow_var 初始化的数值
     false_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
         else random.randrange(MINIMUM_INT, 0)
     char = _get_char()
@@ -191,10 +203,13 @@ def gen_cond_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
+    # main_lines为从templates中选取对应生产模式的模板
     main_lines = templates.COND_MAIN_LINES_ADD if is_pos_add_pos \
         else templates.COND_MAIN_LINES_MINUS
+    # cond 为控制流的条件 根据产生模式选择
     cond = int_init > thresh if is_pos_add_pos \
         else -int_init < thresh
+    # 根据产生模式 计算是否溢出
     if is_pos_add_pos:
         safe = int_init + true_int < MAXIMUM_INT if cond \
             else int_init + false_int < MAXIMUM_INT
@@ -221,6 +236,8 @@ def gen_while_example(include_cond_bufwrite=True):
     dummy_vars = anon_vars[3:]
     int_init = random.randrange(483647, MAXIMUM_INT)
     int_count = math.floor(int_init / 1000000)
+    # 随机选取一个数值作为循环的次数
+    # 2147*1000000=2147000000 + 483647 = MAXIMUM_INT
     count_int = random.randrange(0, 2147)
     char = _get_char()
     substitutions = {
@@ -285,6 +302,8 @@ def gen_fv_cond_example(include_cond_bufwrite=True):
     """
     is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
+    # free_var 为自由变量 在生成的c文件中被rand()初始化
+    # rand()随机函数 若无特别定义RAND_MAX 应该返回的数值上限是2147483647
     overflow_var, int_var, free_var, thresh_var = anon_vars[:4]
     dummy_vars = anon_vars[4:]
     int_init = random.randrange(MAXIMUM_INT)
