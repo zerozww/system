@@ -43,11 +43,11 @@
 # templates for functions without free variables
 
 INTCALCFLOW_ADD = [
-    "$int_var += $overflow_var"
+    "$int_var += $overflow_var;"
 ]
 
 INTCALCFLOW_MINUS = [
-    "$int_var -= $overflow_var"
+    "$int_var -= $overflow_var;"
 ]
 
 COND_DEC_INIT_PAIRS = [
@@ -76,17 +76,17 @@ WHILE_DEC_INIT_PAIRS = [
     ("int $count_var;", "$count_var = $count_int;")
 ]
 WHILE_MAIN_LINES_ADD = [
-    "int i = 0",
+    "int i = 0;",
     "while(i < $count_var){",
     "$overflow_var += 1000000;",
-    "i++",
+    "i++;",
     "}"
 ]
 WHILE_MAIN_LINES_MINUS = [
-    "int i = 0",
+    "int i = 0;",
     "while(i < $count_var){",
     "$overflow_var -= 1000000;",
-    "i++",
+    "i++;",
     "}"
 ]
 
@@ -166,7 +166,7 @@ WHILE_FV_MAIN_LINES_MINUS = [
 
 FOR_FV_DEC_INIT_PAIRS = [
     ("int $overflow_var;", None),
-    ("int $int_var;", "$int_var = $int_init"),
+    ("int $int_var;", "$int_var = $int_init;"),
     ("int $thresh_var;", "$thresh_var = $thresh_int;"),
     ("int $free_var;", "$free_var = rand();")
 ]
