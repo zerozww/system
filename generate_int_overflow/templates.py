@@ -126,14 +126,14 @@ WHILE_MAIN_LINES_MULTI = [
     "}",
 ]
 WHILE_MAIN_LINES_ADD_HIGHER = [
-    "int i = 0",
+    "int i = 0;",
     "while(i > $count_var){",
     "$overflow_var += -1000000;",
     "i--;",
     "}"
 ]
 WHILE_MAIN_LINES_MINUS_HIGHER = [
-    "int i = 0",
+    "int i = 0;",
     "while(i > $count_var){",
     "$overflow_var -= -1000000;",
     "i--;",
@@ -470,7 +470,6 @@ FOR_FV_MAIN_LINES_MINUS_LOWER = [
     "}",
     "for(int i = 0; i < $count_var; i++)",
     "$overflow_var -= 1000000;",
-    "}"
 ]
 FOR_FV_MAIN_LINES_MULTI = [
     "$free_var %= 53970;",
