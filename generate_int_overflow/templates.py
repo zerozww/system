@@ -73,9 +73,20 @@ COND_MAIN_LINES_MINUS = [
     "$overflow_var = $false_int;",
     "}"
 ]
-
+COND_MAIN_LINES_LOWER = [
+    "if($int_var < $thresh_var){",
+    "$overflow_var = $true_int;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
 WHILE_DEC_INIT_PAIRS = [
     ("int $overflow_var;", "$overflow_var = 0;"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $count_var;", "$count_var = $count_int;")
+]
+WHILE_DEC_INIT_PAIRS_LOWER = [
+    ("int $overflow_var;", "$overflow_var = $overflow_int;"),
     ("int $int_var;", "$int_var = $int_init;"),
     ("int $count_var;", "$count_var = $count_int;")
 ]
@@ -114,8 +125,27 @@ WHILE_MAIN_LINES_MULTI = [
     "}"
     "}",
 ]
+WHILE_MAIN_LINES_ADD_HIGHER = [
+    "int i = 0",
+    "while(i > $count_var){",
+    "$overflow_var += -1000000;",
+    "i--",
+    "}"
+]
+WHILE_MAIN_LINES_MINUS_HIGHER = [
+    "int i = 0",
+    "while(i > $count_var){",
+    "$overflow_var -= -1000000;",
+    "i--",
+    "}"
+]
 FOR_DEC_INIT_PAIRS = [
     ("int $overflow_var;", "$overflow_var = 0;"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $count_var;", "$count_var = $count_int;")
+]
+FOR_DEC_INIT_PAIRS_LOWER = [
+    ("int $overflow_var;", "$overflow_var = $overflow_int;"),
     ("int $int_var;", "$int_var = $int_init;"),
     ("int $count_var;", "$count_var = $count_int;")
 ]
@@ -145,6 +175,16 @@ FOR_MAIN_LINES_MULTI = [
     "}",
     "}"
     "}",
+]
+FOR_MAIN_LINES_ADD_HIGHER = [
+    "for(int i = 0; i > $count_var; i--){",
+    "$overflow_var += -1000000;",
+    "}"
+]
+FOR_MAIN_LINES_MINUS_HIGHER = [
+    "for(int i = 0; i > $count_var; i--){",
+    "$overflow_var -= -1000000;",
+    "}"
 ]
 # templates for functions with one free variable
 
@@ -176,12 +216,47 @@ COND_FV_MAIN_LINES_MULTI = [
     "$overflow_var = $false_int;",
     "}"
 ]
+COND_FV_MAIN_LINES_ADD_LOWER = [
+    "if($free_var > $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
+COND_FV_MAIN_LINES_MINUS_LOWER = [
+    "if( $free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
+COND_FV_MAIN_LINES_ADD_HIGHER = [
+    "if($free_var > $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
+COND_FV_MAIN_LINES_MINUS_HIGHER = [
+    "if( $free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
 
 WHILE_FV_DEC_INIT_PAIRS = [
     ("int $overflow_var;", None),
     ("int $int_var;", "$int_var = $int_init;"),
     ("int $thresh_var;", "$thresh_var = $thresh_int;"),
     ("int $free_var;", "$free_var = rand();")
+]
+WHILE_FV_DEC_INIT_PAIRS_LOWER = [
+    ("int $overflow_var;", "$overflow_var=$overflow_int"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $thresh_var;", "$thresh_var = $thresh_int;"),
+    ("int $free_var;", "$free_var = rand();"),
+    ("int $count_var",None)
 ]
 WHILE_FV_MAIN_LINES_ADD = [
     "if ($free_var < $thresh_var){",
@@ -232,11 +307,124 @@ WHILE_FV_MAIN_LINES_MULTI = [
     "i++;",
     "}"
 ]
+WHILE_FV_MAIN_LINES_ADD_LOWER = [
+    "if ($free_var < $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "while(i < $count_var){",
+    "$overflow_var += 1000000;",
+    "i++;",
+    "}"
+]
+# WHILE_FV_DEC_INIT_PAIRS_LOWER = [
+#     ("int $overflow_var;", None),
+#     ("int $int_var;", "$int_var = $int_init;"),
+#     ("int $thresh_var;", "$thresh_var = $thresh_int;"),
+#     ("int $free_var;", "$free_var = rand();"),
+#     ("int $count_var", "$count_var = $count_int;")
+# ]
+WHILE_FV_MAIN_LINES_ADD_HIGHER = [
+    "if ($free_var > $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "while(i > $count_var){",
+    "$overflow_var += -1000000;",
+    "i--;",
+    "}"
+]
+WHILE_FV_MAIN_LINES_ADD_LOWER = [
+    "if ($free_var > $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "while(i > $count_var){",
+    "$overflow_var += -1000000;",
+    "i--;",
+    "}"
+]
+WHILE_FV_MAIN_LINES_MINUS_LOWER = [
+    "if ($free_var < $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "while(i < $count_var){",
+    "$overflow_var -= 1000000;",
+    "i++;",
+    "}"
+]
+WHILE_FV_MAIN_LINES_MINUS_LOWER = [
+    "if ($free_var < $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "while(i < $count_var){",
+    "$overflow_var -= 1000000;",
+    "i++;",
+    "}"
+]
+WHILE_FV_MAIN_LINES_MINUS_HIGHER = [
+    "if ( $free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "int i = 0;",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "while(i < $count_var){",
+    "$overflow_var -= -1000000;",
+    "i++;",
+    "}"
+]
+
 FOR_FV_DEC_INIT_PAIRS = [
     ("int $overflow_var;", None),
     ("int $int_var;", "$int_var = $int_init;"),
     ("int $thresh_var;", "$thresh_var = $thresh_int;"),
     ("int $free_var;", "$free_var = rand();")
+]
+FOR_FV_DEC_INIT_PAIRS_LOWER = [
+    ("int $overflow_var;", "$overflow_var=$overflow_int"),
+    ("int $int_var;", "$int_var = $int_init;"),
+    ("int $thresh_var;", "$thresh_var = $thresh_int;"),
+    ("int $free_var;", "$free_var = rand();"),
+    ("int $count_var", None)
+]
+FOR_FV_MAIN_LINES_ADD_HIGHER = [
+    "if ($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "for(int i = 0; i > $count_var; i--){",
+    "$overflow_var += -1000000;",
+    "}"
+]
+FOR_FV_MAIN_LINES_ADD_LOWER = [
+    "if ($free_var < $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "for(int i = 0; i < $count_var; i++)",
+    "$overflow_var += 1000000;",
+    "}"
 ]
 FOR_FV_MAIN_LINES_ADD = [
     "if ($free_var < $thresh_var){",
@@ -250,7 +438,6 @@ FOR_FV_MAIN_LINES_ADD = [
     "$overflow_var += 1000000;",
     "}"
 ]
-
 FOR_FV_MAIN_LINES_MINUS = [
     "if (-$free_var > $thresh_var){",
     "$overflow_var = -$free_var;",
@@ -260,6 +447,28 @@ FOR_FV_MAIN_LINES_MINUS = [
     "int $count_var = $overflow_var / -1000000;",
     "$overflow_var = 0;",
     "for(int i = 0; i < $count_var; i++){",
+    "$overflow_var -= 1000000;",
+    "}"
+]
+FOR_FV_MAIN_LINES_MINUS_HIGHER = [
+    "if ($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "int $count_var = $overflow_var / 1000000;",
+    "$overflow_var = 0;",
+    "for(int i = 0; i > $count_var; i--){",
+    "$overflow_var -= -1000000;",
+    "}"
+]
+FOR_FV_MAIN_LINES_MINUS_LOWER = [
+    "if ($free_var < $thresh_var){",
+    "$count_var = $free_var;",
+    "} else {",
+    "$count_var = $false_int;",
+    "}",
+    "for(int i = 0; i < $count_var; i++)",
     "$overflow_var -= 1000000;",
     "}"
 ]
