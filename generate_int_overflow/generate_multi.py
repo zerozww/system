@@ -72,6 +72,8 @@ CHARSET = string.digits + string.ascii_letters
 MAXIMUM_INT = 2147483647
 # minimum of integer
 MINIMUM_INT = -2147483648
+# number makes multiply overflow /no-overflow ratio to 1:1
+MULTI_NUM = 54970
 # the number of bytes in each hash filename
 FNAME_HASHLEN = 5
 
@@ -110,8 +112,8 @@ def main(args):
     if seed != -1:
         random.seed(seed)
 
-    generators = [gen_cond_example, gen_while_example, gen_for_example,
-                  gen_fv_cond_example, gen_fv_while_example, gen_fv_for_example]
+    generators = [gen_cond_example_multi, gen_while_example_multi, gen_for_example_multi,
+                  gen_fv_cond_example_multi, gen_fv_while_example_multi, gen_fv_for_example_multi]
     if linear_only:
         generators = [gen_tautonly_linear_example]
     num_generators = len(generators)
@@ -158,40 +160,25 @@ def main(args):
         }
         with open(args.metadata_file, 'w') as f:
             json.dump(metadata, f)
-
     return 0
 
 
-def gen_cond_example(include_cond_bufwrite=True):
-    """Generate conditional example
+
+def gen_cond_example_multi(include_cond_bufwrite=True):
+    """Generate conditional example_multi
 
     Returns:
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
-    # 其他函数中出现相同的变量意义相同
-    # 随机选择一种产生模式，正数加正数或正数减负数
     is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
-    # 变量解释
-    # overflow_var 之后会加到int_var上的变量 也就是 += 符号的右变量
-    # int_var 初始变量也就是 += 符号的左变量
-    # thresh_var 控制流的条件变量
     overflow_var, int_var, thresh_var = anon_vars[:3]
-    # dummy_vars 混淆变量的数组
     dummy_vars = anon_vars[3:]
-    # 根据模式选择变量范围
-    # thresh 为thresh_var 进行初始化的数值
-    thresh = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
-    # int_init 为int_var 进行初始化的数值
-    int_init = random.randrange(0, MAXIMUM_INT)
-    # true_int 控制流走向 if 条件时 给overflow_var 初始化的数值
-    true_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
-    # false_int 控制流走向 else 条件时 给overflow_var 初始化的数值
-    false_int = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
+    thresh = random.randrange(-MULTI_NUM, MULTI_NUM)
+    int_init = random.randrange(-MULTI_NUM, MULTI_NUM)
+    true_int = random.randrange(-MULTI_NUM, MULTI_NUM)
+    false_int = random.randrange(-MULTI_NUM, MULTI_NUM)
     char = _get_char()
     substitutions = {
         'int_var': int_var,
@@ -204,63 +191,62 @@ def gen_cond_example(include_cond_bufwrite=True):
         'char': char
     }
     # main_lines为从templates中选取对应生产模式的模板
-    main_lines = templates.COND_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.COND_MAIN_LINES_MINUS
+    main_lines = templates.COND_MAIN_LINES_ADD
     # cond 为控制流的条件 根据产生模式选择
-    cond = int_init > thresh if is_pos_add_pos \
-        else -int_init < thresh
+    cond = int_init > thresh
     # 根据产生模式 计算是否溢出
-    if is_pos_add_pos:
-        safe = int_init + true_int < MAXIMUM_INT if cond \
-            else int_init + false_int < MAXIMUM_INT
+    safe_true = int_init * true_int
+    safe_false = int_init * false_int
+    if cond:
+        safe = safe_true < MAXIMUM_INT if safe_true > 0 \
+            else safe_true > MINIMUM_INT
     else:
-        safe = int_init - true_int < MAXIMUM_INT if cond \
-            else int_init - false_int < MAXIMUM_INT
+        safe = safe_false < MAXIMUM_INT if safe_false > 0 \
+            else safe_false > MINIMUM_INT
     dec_init_pairs = templates.COND_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite, is_pos_add_pos)
+                                     include_cond_bufwrite)
 
 
-def gen_while_example(include_cond_bufwrite=True):
-    """Generate while-loop example
+
+def gen_while_example_multi(include_cond_bufwrite=True):
+    """Generate while-loop example_multi
 
     Returns:
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
-    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    int_init = random.randrange(483647, MAXIMUM_INT)
-    int_count = math.floor(int_init / 1000000)
+    int_init = random.randrange(-MULTI_NUM, MULTI_NUM)
     # 随机选取一个数值作为循环的次数
-    # 2147*1000000=2147000000 + 483647 = MAXIMUM_INT
-    count_int = random.randrange(0, 2147)
+    count_int = random.randrange(-MULTI_NUM, MULTI_NUM)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
         'int_var': int_var,
         'count_var': count_var,
-        'int_count': int_count,
         'int_init': int_init,
         'count_int': count_int,
         'char': char
     }
-    main_lines = templates.WHILE_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.WHILE_MAIN_LINES_MINUS
-    safe = (int_count + count_int) < 2147
+    main_lines = templates.WHILE_MAIN_LINES_MULTI
+    product = count_int * int_init
+    safe = product < MAXIMUM_INT if product > 0 \
+        else product > MINIMUM_INT
     dec_init_pairs = templates.WHILE_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite,is_pos_add_pos)
+                                     include_cond_bufwrite)
 
 
-def gen_for_example(include_cond_bufwrite=True):
-    """Generate for-loop example
+
+def gen_for_example_multi(include_cond_bufwrite=True):
+    """Generate for-loop example_multi
 
     Returns:
         instance_str (str): str of code example
@@ -270,47 +256,45 @@ def gen_for_example(include_cond_bufwrite=True):
     anon_vars = _get_anon_vars()
     overflow_var, int_var, count_var = anon_vars[:3]
     dummy_vars = anon_vars[3:]
-    int_init = random.randrange(483647, MAXIMUM_INT)
-    count_int = random.randrange(0, 2147)
-    int_count = math.floor(int_init / 1000000)
+    int_init = random.randrange(-MULTI_NUM, MULTI_NUM)
+    # 随机选取一个数值作为循环的次数
+    count_int = random.randrange(-MULTI_NUM, MULTI_NUM)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
         'int_var': int_var,
         'count_var': count_var,
-        'int_count': int_count,
         'int_init': int_init,
         'count_int': count_int,
         'char': char
     }
-    main_lines = templates.FOR_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.FOR_MAIN_LINES_MINUS
-    safe = (int_count + count_int) < 2147
+    main_lines = templates.FOR_MAIN_LINES_MULTI
+    product = int_init * count_int
+    safe = product < MAXIMUM_INT if product < MAXIMUM_INT \
+        else product > MINIMUM_INT
     dec_init_pairs = templates.FOR_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
-                                     safe, substitutions,
-                                     include_cond_bufwrite, is_pos_add_pos)
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
+                                           safe, substitutions,
+                                           include_cond_bufwrite)
 
 
-def gen_fv_cond_example(include_cond_bufwrite=True):
+
+def gen_fv_cond_example_multi(include_cond_bufwrite=True):
     """Generate conditional example with free variable
 
     Returns:
         instance_str (str): str of code example
         tags (list of Tag): tag for each line representing buffer safety
     """
-    is_pos_add_pos = random.choice([True, False])
     anon_vars = _get_anon_vars()
     # free_var 为自由变量 在生成的c文件中被rand()初始化
     # rand()随机函数 若无特别定义RAND_MAX 应该返回的数值上限是2147483647
     overflow_var, int_var, free_var, thresh_var = anon_vars[:4]
     dummy_vars = anon_vars[4:]
-    int_init = random.randrange(MAXIMUM_INT)
-    thresh_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
-    false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
+    int_init = random.randrange(-MULTI_NUM, MULTI_NUM)
+    thresh_int = random.randrange(-MULTI_NUM, MULTI_NUM)
+    false_int = random.randrange(-MULTI_NUM, MULTI_NUM)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
@@ -322,18 +306,16 @@ def gen_fv_cond_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.COND_FV_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.COND_FV_MAIN_LINES_MINUS
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
+    main_lines = templates.COND_FV_MAIN_LINES_MULTI
+    safe = max(abs(int_init * false_int), abs(int_init * thresh_int)) < MAXIMUM_INT
     dec_init_pairs = templates.COND_FV_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite, is_pos_add_pos)
+                                     include_cond_bufwrite)
 
 
-def gen_fv_while_example(include_cond_bufwrite=True):
+def gen_fv_while_example_multi(include_cond_bufwrite=True):
     """Generate while-loop example with one free variable
 
     Returns:
@@ -344,11 +326,9 @@ def gen_fv_while_example(include_cond_bufwrite=True):
     anon_vars = _get_anon_vars()
     overflow_var, int_var, free_var, thresh_var, count_var = anon_vars[:5]
     dummy_vars = anon_vars[5:]
-    thresh_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
-    int_init = random.randrange(483647, MAXIMUM_INT)
-    false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
-        else random.randrange(MINIMUM_INT, 0)
+    thresh_int = random.randrange(-MULTI_NUM, MULTI_NUM)
+    int_init = random.randrange(-MULTI_NUM, MULTI_NUM)
+    false_int = random.randrange(-MULTI_NUM, MULTI_NUM)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
@@ -361,18 +341,44 @@ def gen_fv_while_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.WHILE_FV_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.WHILE_FV_MAIN_LINES_MINUS
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
+    num = 1
+    # if is_pos_add_pos:
+    #     if false_int < thresh_int:
+    #         overflow_var = thresh_int
+    #     else:
+    #         overflow_var = false_int
+    #     count = 0
+    #     while (overflow_var / 10) >= 10:
+    #         count = count + 1
+    #         overflow_var = overflow_var / 10
+    #     i = 0
+    #     while i < count:
+    #         num = num * 10
+    #         i = i + 1
+    # else:
+    #     if false_int < thresh_int:
+    #         overflow_var = -false_int
+    #     else:
+    #         overflow_var = -thresh_int
+    #     count = 0
+    #     while (overflow_var / 10) >= 10:
+    #         count = count + 1
+    #         overflow_var = overflow_var / 10
+    #     i = 0
+    #     while i < count:
+    #         num = num * 10
+    #         i = i + 1
+    main_lines = templates.WHILE_FV_MAIN_LINES_MULTI
+    safe = max(abs(int_init * false_int), abs(int_init * thresh_int)) < MAXIMUM_INT
     dec_init_pairs = templates.WHILE_FV_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite, is_pos_add_pos)
+                                     include_cond_bufwrite)
 
 
-def gen_fv_for_example(include_cond_bufwrite=True):
+
+def gen_fv_for_example_multi(include_cond_bufwrite=True):
     """Generate for-loop example with one free variable
 
     Returns:
@@ -387,7 +393,8 @@ def gen_fv_for_example(include_cond_bufwrite=True):
         else random.randrange(MINIMUM_INT, 0)
     false_int = random.randrange(MAXIMUM_INT) if is_pos_add_pos \
         else random.randrange(MINIMUM_INT, 0)
-    int_init = random.randrange(483647, MAXIMUM_INT)
+    int_init = random.randrange(0, MAXIMUM_INT) if is_pos_add_pos \
+        else random.randrange(MINIMUM_INT, 0)
     char = _get_char()
     substitutions = {
         'overflow_var': overflow_var,
@@ -400,16 +407,40 @@ def gen_fv_for_example(include_cond_bufwrite=True):
         'false_int': false_int,
         'char': char
     }
-    main_lines = templates.FOR_FV_MAIN_LINES_ADD if is_pos_add_pos \
-        else templates.FOR_FV_MAIN_LINES_MINUS
-    safe = max(int_init+false_int, int_init+thresh_int) < MAXIMUM_INT if is_pos_add_pos \
-        else max(int_init-false_int, int_init-thresh_int) < MAXIMUM_INT
+    num = 1
+    # if is_pos_add_pos:
+    #     if false_int < thresh_int:
+    #         overflow_var = thresh_int
+    #     else:
+    #         overflow_var = false_int
+    #     count = 0
+    #     while (overflow_var / 10) >= 10:
+    #         count = count + 1
+    #         overflow_var = overflow_var / 10
+    #     i = 0
+    #     while i < count:
+    #         num = num * 10
+    #         i = i + 1
+    # else:
+    #     if false_int < thresh_int:
+    #         overflow_var = -false_int
+    #     else:
+    #         overflow_var = -thresh_int
+    #     count = 0
+    #     while (overflow_var / 10) >= 10:
+    #         count = count + 1
+    #         overflow_var = overflow_var / 10
+    #     i = 0
+    #     while i < count:
+    #         num = num * 10
+    #         i = i + 1
+    main_lines = templates.FOR_FV_MAIN_LINES_MULTI
+    safe = max(abs(int_init * false_int), abs(int_init * thresh_int)) < MAXIMUM_INT
     dec_init_pairs = templates.FOR_FV_DEC_INIT_PAIRS
 
-    return _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
+    return _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
                                      safe, substitutions,
-                                     include_cond_bufwrite, is_pos_add_pos)
-
+                                     include_cond_bufwrite)
 
 def gen_tautonly_linear_example():
     """Generate example with no control flow, only flow-insensitive writes
@@ -475,6 +506,45 @@ def _assemble_general_example(dec_init_pairs, main_lines, dummy_vars,
                                      templates.FUNC_TMPL_STR, tags)
     return instance_str, tags
 
+
+def _assemble_general_example_multi(dec_init_pairs, main_lines, dummy_vars,
+                              safe, substitutions, include_cond_bufwrite):
+    """Get instance lines, convert to string, generate tags
+
+    Args:
+        dec_init_pairs (list of tuple): declaration/initialization statements,
+            e.g. those in templates.py
+        main_lines (list of str): lines with the conditional or loop,
+            e.g. those in templates.py
+        dummy_vars (list of str): variable names available for use
+        safe (bool): whether the conditional buffer write is safe
+        substitutions (dict): names to substitute into templates
+        include_cond_bufwrite (bool): whether to include the
+            control flow-sensitive buffer write
+
+    Returns:
+        instance_str (str): str of code example
+        tags (list of Tag): tag for each line representing buffer safety
+
+    Ensures:
+        len(instance_str.split("\n")) == len(tags)
+    """
+    # if include_cond_bufwrite:
+    #     # copy to avoid changing the template list due to aliasing
+    #     main_lines = main_lines[:]
+    #     main_lines += templates.INTCALCFLOW_ADD
+    # else:
+    #     safe = None
+
+    main_lines = main_lines[:]
+    main_lines += templates.INTCALCFLOW_MULTI
+
+    lines, body_tags = _get_lines(dec_init_pairs, main_lines,
+                                  dummy_vars, safe, include_cond_bufwrite)
+    tags = _get_tags(body_tags)
+    instance_str = _get_instance_str(lines, substitutions,
+                                     templates.FUNC_TMPL_STR, tags)
+    return instance_str, tags
 
 def _get_anon_vars():
     """Get list of unique, anonymized variable names in random order
@@ -815,8 +885,8 @@ def _test(verbose=False):
             else:
                 assert taut_in_tags
 
-    for gen in [gen_cond_example, gen_while_example, gen_for_example,
-                gen_fv_cond_example, gen_fv_while_example, gen_fv_for_example]:
+    for gen in [gen_cond_example_multi, gen_while_example_multi, gen_for_example_multi,
+                gen_fv_cond_example_multi, gen_fv_while_example_multi, gen_fv_for_example_multi]:
 
         kwargs = {"include_cond_bufwrite": True}
         run_tests(gen, kwargs=kwargs)

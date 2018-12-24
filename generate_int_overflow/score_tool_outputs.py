@@ -44,7 +44,7 @@ import logging
 from pathlib import PurePath
 from collections import defaultdict, namedtuple
 #from generate import Tag
-from generate_origin.sa_tag import Tag
+import sa_tag.Tag
 
 Alert = namedtuple('Alert', ["tool", "checker", "file", "line", "message"])
 

@@ -50,6 +50,10 @@ INTCALCFLOW_MINUS = [
     "$int_var -= $overflow_var;"
 ]
 
+INTCALCFLOW_MULTI = [
+    "$int_var *= $overflow_var;"
+]
+
 COND_DEC_INIT_PAIRS = [
     ("int $overflow_var;", None),
     ("int $int_var;", "$int_var = $int_init;"),
@@ -89,7 +93,27 @@ WHILE_MAIN_LINES_MINUS = [
     "i++;",
     "}"
 ]
-
+WHILE_MAIN_LINES_MULTI = [
+    "if($count_var > 0){",
+    "$overflow_var = 1;",
+    "while($overflow_var < $count_var){",
+    "$overflow_var *= 2;",
+    "if($overflow_var * 2 > $count_var){",
+    "$overflow_var = $count_var;",
+    "break;",
+    "}",
+    "}",
+    "}else{",
+    "$overflow_var = -1;",
+    "while($overflow_var > $count_var){",
+    "$overflow_var *= 2;",
+    "if($overflow_var * 2 < $count_var){",
+    "$overflow_var = $count_var;",
+    "break;",
+    "}",
+    "}"
+    "}",
+]
 FOR_DEC_INIT_PAIRS = [
     ("int $overflow_var;", "$overflow_var = 0;"),
     ("int $int_var;", "$int_var = $int_init;"),
@@ -105,7 +129,21 @@ FOR_MAIN_LINES_MINUS = [
     "$overflow_var -= 1000000;",
     "}"
 ]
-
+FOR_MAIN_LINES_MULTI = [
+    "if($count_var > 0){",
+    "for($overflow_var = 1; $overflow_var < $count_var; $overflow_var *= 2){",
+    "if($overflow_var * 2 > $count_var){",
+    "$overflow_var = $count_var;",
+    "break;",
+    "}",
+    "}else{",
+    "for($overflow_var = -1; $overflow_var > $count_var; $overflow_var *= 2){",
+    "if($overflow_var * 2 < $count_var){",
+    "$overflow_var = $count_var;",
+    "break;",
+    "}",
+    "}",
+]
 # templates for functions with one free variable
 
 COND_FV_DEC_INIT_PAIRS = [
@@ -124,6 +162,14 @@ COND_FV_MAIN_LINES_ADD = [
 COND_FV_MAIN_LINES_MINUS = [
     "if( -$free_var > $thresh_var){",
     "$overflow_var = -$free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}"
+]
+COND_FV_MAIN_LINES_MULTI = [
+    "$free_var %= 53970;",
+    "if($free_var < $thresh_var || -$free_var > $thresh_var){",
+    "$overflow_var = $free_var;",
     "} else {",
     "$overflow_var = $false_int;",
     "}"
@@ -163,7 +209,26 @@ WHILE_FV_MAIN_LINES_MINUS = [
     "i++;",
     "}"
 ]
-
+WHILE_FV_MAIN_LINES_MULTI = [
+    "if ($free_var < $thresh_var || -$free_var > $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "if($overflow_var < 0)",
+    "$overflow_var = - $overflow_var;",
+    "int i = 0;",
+    "int $count_var = 0;",
+    "while(($overflow_var / 2) >= 2){",
+    "$count_var++;",
+    "$overflow_var = $overflow_var / 2",
+    "}",
+    "$overflow_var = 1;",
+    "while(i < $count_var){",
+    "$overflow_var *= 2;",
+    "i++;",
+    "}"
+]
 FOR_FV_DEC_INIT_PAIRS = [
     ("int $overflow_var;", None),
     ("int $int_var;", "$int_var = $int_init;"),
@@ -193,6 +258,25 @@ FOR_FV_MAIN_LINES_MINUS = [
     "$overflow_var = 0;",
     "for(int i = 0; i < $count_var; i++){",
     "$overflow_var -= 1000000;",
+    "}"
+]
+FOR_FV_MAIN_LINES_MULTI = [
+    "$free_var %= 53970;",
+    "if ($free_var < $thresh_var){",
+    "$overflow_var = $free_var;",
+    "} else {",
+    "$overflow_var = $false_int;",
+    "}",
+    "if($overflow_var < 0)",
+    "$overflow_var = - $overflow_var;",
+    "int $count_var = 0;",
+    "while(($overflow_var / 2) >= 2){",
+    "$count_var++;",
+    "$overflow_var = $overflow_var / 2;",
+    "}",
+    "$overflow_var = 1;",
+    "for(int i = 0; i < $count_var; i++){",
+    "$overflow_var = $overflow_var * 2;",
     "}"
 ]
 
