@@ -135,6 +135,7 @@ FOR_MAIN_LINES_MULTI = [
     "if($overflow_var * 2 > $count_var){",
     "$overflow_var = $count_var;",
     "break;",
+    "}"
     "}",
     "}else{",
     "for($overflow_var = -1; $overflow_var > $count_var; $overflow_var *= 2){",
@@ -142,6 +143,7 @@ FOR_MAIN_LINES_MULTI = [
     "$overflow_var = $count_var;",
     "break;",
     "}",
+    "}"
     "}",
 ]
 # templates for functions with one free variable
@@ -215,13 +217,14 @@ WHILE_FV_MAIN_LINES_MULTI = [
     "} else {",
     "$overflow_var = $false_int;",
     "}",
-    "if($overflow_var < 0)",
-    "$overflow_var = - $overflow_var;",
+    "if($overflow_var < 0){",
+    "$overflow_var = - $overflow_var;"
+    "}",
     "int i = 0;",
     "int $count_var = 0;",
     "while(($overflow_var / 2) >= 2){",
     "$count_var++;",
-    "$overflow_var = $overflow_var / 2",
+    "$overflow_var = $overflow_var / 2;",
     "}",
     "$overflow_var = 1;",
     "while(i < $count_var){",
