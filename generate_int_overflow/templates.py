@@ -424,7 +424,6 @@ FOR_FV_MAIN_LINES_ADD_LOWER = [
     "}",
     "for(int i = 0; i < $count_var; i++)",
     "$overflow_var += 1000000;",
-    "}"
 ]
 FOR_FV_MAIN_LINES_ADD = [
     "if ($free_var < $thresh_var){",
